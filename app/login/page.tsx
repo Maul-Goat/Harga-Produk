@@ -23,6 +23,12 @@ export default function LoginPage() {
     setIsLoading(true)
     setError("")
 
+    if (!email || !password) {
+      setError("Email dan password harus diisi")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const result = await loginUser(email, password)
       if (result.success) {
@@ -31,6 +37,7 @@ export default function LoginPage() {
         setError(result.error || "Email atau password salah")
       }
     } catch (err) {
+      console.error("Login error:", err)
       setError("Terjadi kesalahan saat login")
     } finally {
       setIsLoading(false)
@@ -38,11 +45,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="container flex h-screen items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Masuk</CardTitle>
-          <CardDescription>Masukkan username dan password untuk mengakses akun Anda</CardDescription>
+          <CardDescription>Masukkan email dan password untuk mengakses akun Anda</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
