@@ -35,7 +35,7 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-10 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
+        <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <Sheet>
               <SheetTrigger asChild>
@@ -76,7 +76,8 @@ export default function DashboardLayout({ children }) {
             </Sheet>
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <Package className="h-6 w-6" />
-              <span className="hidden md:inline-block">Sistem Manajemen Produk</span>
+              <span className="hidden sm:inline-block">Sistem Manajemen Produk</span>
+              <span className="sm:hidden">SMP</span>
             </Link>
           </div>
           <nav className="hidden md:flex items-center gap-6">
@@ -103,7 +104,7 @@ export default function DashboardLayout({ children }) {
         </div>
       </header>
       <main className="flex-1">
-        <div className="container py-6">{children}</div>
+        <div className="w-full px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">{children}</div>
       </main>
     </div>
   )
