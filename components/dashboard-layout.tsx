@@ -12,14 +12,20 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname()
   const router = useRouter()
   const [isMounted, setIsMounted] = useState(false)
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
   const handleLogout = async () => {
-    await logoutUser()
-    router.push("/login")
+    try {
+      await logoutUser()
+      router.push("/login")
+    } catch (error) {
+      console.error("Logout error:", error)
+      router.push("/login")
+    }
   }
 
   const navigation = [
@@ -28,8 +34,34 @@ export default function DashboardLayout({ children }) {
     { name: "Daftar Produk", href: "/dashboard/products", icon: Package },
   ]
 
+  const handleNavClick = (href) => {
+    setIsSheetOpen(false)
+    router.push(href)
+  }
+
   if (!isMounted) {
-    return null
+    return (
+      <div className="flex min-h-screen flex-col">
+        <header className="sticky top-0 z-10 border-b bg-background">
+          <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 font-semibold">
+                <Package className="h-6 w-6" />
+                <span className="hidden sm:inline-block">Sistem Manajemen Produk</span>
+                <span className="sm:hidden">SMP</span>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main className="flex-1">
+          <div className="w-full px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div className="flex items-center justify-center h-[50vh]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   return (
@@ -37,7 +69,7 @@ export default function DashboardLayout({ children }) {
       <header className="sticky top-0 z-10 border-b bg-background">
         <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
-            <Sheet>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="md:hidden">
                   <Menu className="h-5 w-5" />
@@ -49,10 +81,10 @@ export default function DashboardLayout({ children }) {
                   {navigation.map((item) => {
                     const Icon = item.icon
                     return (
-                      <Link
+                      <button
                         key={item.href}
-                        href={item.href}
-                        className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
+                        onClick={() => handleNavClick(item.href)}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-left w-full ${
                           pathname === item.href
                             ? "bg-muted text-primary"
                             : "text-muted-foreground hover:text-foreground"
@@ -60,7 +92,7 @@ export default function DashboardLayout({ children }) {
                       >
                         <Icon className="h-5 w-5" />
                         {item.name}
-                      </Link>
+                      </button>
                     )
                   })}
                   <Button
