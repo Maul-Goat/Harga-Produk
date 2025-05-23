@@ -24,13 +24,17 @@ export default function DashboardPage() {
           return
         }
 
-        const productData = await getProducts()
-        setProducts(productData || [])
-        setError("")
-      } catch (error) {
-        console.error("Error fetching products:", error)
-        setError("Gagal memuat data produk")
-        setProducts([]) // Set empty array on error
+        try {
+          const productData = await getProducts()
+          setProducts(Array.isArray(productData) ? productData : [])
+        } catch (fetchError) {
+          console.error("Error fetching products:", fetchError)
+          setError("Gagal memuat data produk")
+          setProducts([])
+        }
+      } catch (authError) {
+        console.error("Authentication error:", authError)
+        router.push("/login")
       } finally {
         setIsLoading(false)
       }
@@ -38,6 +42,37 @@ export default function DashboardPage() {
 
     checkAuthentication()
   }, [router])
+
+  // Helper function to safely get numeric values
+  const safeNumber = (value) => {
+    if (value === null || value === undefined) return 0
+    const num = Number.parseFloat(value)
+    return isNaN(num) ? 0 : num
+  }
+
+  // Calculate average selling price safely
+  const calculateAveragePrice = () => {
+    if (!products.length) return 0
+
+    const total = products.reduce((acc, product) => {
+      const price = safeNumber(product.selling_price || product.sellingPrice)
+      return acc + price
+    }, 0)
+
+    return Math.round(total / products.length)
+  }
+
+  // Calculate average margin safely
+  const calculateAverageMargin = () => {
+    if (!products.length) return 0
+
+    const total = products.reduce((acc, product) => {
+      const margin = safeNumber(product.profit_margin || product.profitMargin)
+      return acc + margin
+    }, 0)
+
+    return Math.round(total / products.length)
+  }
 
   if (isLoading) {
     return (
@@ -76,12 +111,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {products.length > 0
-                  ? `Rp ${Math.round(
-                      products.reduce((acc, product) => acc + (product.selling_price || product.sellingPrice || 0), 0) /
-                        products.length,
-                    ).toLocaleString("id-ID")}`
-                  : "Rp 0"}
+                {products.length > 0 ? `Rp ${calculateAveragePrice().toLocaleString("id-ID")}` : "Rp 0"}
               </div>
             </CardContent>
           </Card>
@@ -90,11 +120,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">Margin Rata-rata</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {products.length > 0
-                  ? `${Math.round(products.reduce((acc, product) => acc + (product.profit_margin || product.profitMargin || 0), 0) / products.length)}%`
-                  : "0%"}
-              </div>
+              <div className="text-2xl font-bold">{products.length > 0 ? `${calculateAverageMargin()}%` : "0%"}</div>
             </CardContent>
           </Card>
         </div>
@@ -117,7 +143,7 @@ export default function DashboardPage() {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg truncate">{product.name}</CardTitle>
                       <CardDescription className="truncate">
-                        {product.product_code || product.productCode || `ID: ${product.id.substring(0, 8)}`}
+                        {product.product_code || product.productCode || `ID: ${String(product.id).substring(0, 8)}`}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -125,13 +151,13 @@ export default function DashboardPage() {
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground text-sm">Harga Jual:</span>
                           <span className="font-medium text-sm">
-                            Rp {(product.selling_price || product.sellingPrice || 0).toLocaleString("id-ID")}
+                            Rp {safeNumber(product.selling_price || product.sellingPrice).toLocaleString("id-ID")}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground text-sm">Margin:</span>
                           <span className="font-medium text-sm">
-                            {product.profit_margin || product.profitMargin || 0}%
+                            {safeNumber(product.profit_margin || product.profitMargin)}%
                           </span>
                         </div>
                       </div>
