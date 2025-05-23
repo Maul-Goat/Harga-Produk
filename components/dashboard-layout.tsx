@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { logoutUser } from "@/lib/auth"
 import { Calculator, Home, Menu, Package, LogOut } from "lucide-react"
 
@@ -66,7 +67,7 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 border-b bg-background">
+      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -95,6 +96,12 @@ export default function DashboardLayout({ children }) {
                       </button>
                     )
                   })}
+                  <div className="border-t pt-2 mt-2">
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span className="text-sm font-medium">Tema</span>
+                      <ThemeToggle />
+                    </div>
+                  </div>
                   <Button
                     variant="ghost"
                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground justify-start text-lg font-medium"
@@ -119,7 +126,7 @@ export default function DashboardLayout({ children }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-2 text-sm font-medium ${
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
                     pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -128,6 +135,7 @@ export default function DashboardLayout({ children }) {
                 </Link>
               )
             })}
+            <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1">
               <LogOut className="h-4 w-4" />
               Keluar
