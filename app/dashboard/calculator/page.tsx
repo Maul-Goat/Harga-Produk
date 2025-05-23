@@ -62,7 +62,7 @@ export default function CalculatorPage() {
       }
 
       await addProduct(productData)
-      router.push("/dashboard/products")
+      router.push("/dashboard")
     } catch (error) {
       console.error("Error saving product:", error)
       alert("Gagal menyimpan produk. Silakan coba lagi.")
@@ -73,7 +73,7 @@ export default function CalculatorPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <Card>
           <CardHeader>
             <CardTitle>Kalkulator Harga Jual</CardTitle>
@@ -82,13 +82,13 @@ export default function CalculatorPage() {
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Nama Produk</Label>
                 <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="materialCost">Biaya Bahan Baku (Rp)</Label>
                   <Input
@@ -156,7 +156,7 @@ export default function CalculatorPage() {
                 />
               </div>
 
-              <div className="bg-muted p-4 rounded-lg">
+              <div className="bg-muted p-4 rounded-lg space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Total Biaya Produksi:</span>
                   <span>
@@ -169,21 +169,21 @@ export default function CalculatorPage() {
                     ).toLocaleString("id-ID")}
                   </span>
                 </div>
-                <div className="flex justify-between items-center mt-2">
+                <div className="flex justify-between items-center">
                   <span className="font-medium">Margin Keuntungan:</span>
                   <span>{formData.profit_margin}%</span>
                 </div>
-                <div className="flex justify-between items-center mt-4 text-lg font-bold">
+                <div className="flex justify-between items-center text-lg font-bold pt-2 border-t">
                   <span>Harga Jual:</span>
                   <span>Rp {sellingPrice.toLocaleString("id-ID")}</span>
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" type="button" onClick={() => router.back()}>
+            <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
+              <Button variant="outline" type="button" onClick={() => router.back()} className="w-full sm:w-auto">
                 Batal
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
                 {isLoading ? "Menyimpan..." : "Simpan Produk"}
               </Button>
             </CardFooter>
