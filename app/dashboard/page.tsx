@@ -1,145 +1,194 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { checkAuth } from "@/lib/auth"
-import { getProducts } from "@/lib/products"
+import { addProduct } from "@/lib/products"
 import DashboardLayout from "@/components/dashboard-layout"
 
-export default function DashboardPage() {
+export default function CalculatorPage() {
   const router = useRouter()
-  const [products, setProducts] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState("")
+  const [formData, setFormData] = useState({
+    name: "",
+    material_cost: 0,
+    labor_cost: 0,
+    overhead_cost: 0,
+    other_cost: 0,
+    profit_margin: 20,
+  })
+  const [sellingPrice, setSellingPrice] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const checkAuthentication = async () => {
       const isAuthenticated = await checkAuth()
       if (!isAuthenticated) {
         router.push("/login")
-        return
-      }
-
-      try {
-        const productData = await getProducts()
-        setProducts(productData)
-        setError("")
-      } catch (error) {
-        console.error("Error fetching products:", error)
-        setError("Gagal memuat data produk")
-      } finally {
-        setIsLoading(false)
       }
     }
 
     checkAuthentication()
   }, [router])
 
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-[50vh]">
-          <p>Memuat data...</p>
-        </div>
-      </DashboardLayout>
-    )
+  useEffect(() => {
+    calculateSellingPrice()
+  }, [formData])
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    const numericValue = name !== "name" ? Number.parseFloat(value) || 0 : value
+    setFormData((prev) => ({ ...prev, [name]: numericValue }))
+  }
+
+  const calculateSellingPrice = () => {
+    const { material_cost, labor_cost, overhead_cost, other_cost, profit_margin } = formData
+    const totalCost = material_cost + labor_cost + overhead_cost + other_cost
+    const price = totalCost + (totalCost * profit_margin) / 100
+    setSellingPrice(price)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      const productData = {
+        ...formData,
+        selling_price: sellingPrice,
+      }
+
+      await addProduct(productData)
+      router.push("/dashboard")
+    } catch (error) {
+      console.error("Error saving product:", error)
+      alert("Gagal menyimpan produk. Silakan coba lagi.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <DashboardLayout>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <Button asChild>
-          <Link href="/dashboard/calculator">Tambah Produk Baru</Link>
-        </Button>
-      </div>
-
-      {error && <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md mb-4">{error}</div>}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="max-w-4xl mx-auto">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Produk</CardTitle>
+          <CardHeader>
+            <CardTitle>Kalkulator Harga Jual</CardTitle>
+            <CardDescription>
+              Masukkan detail biaya produksi dan margin keuntungan untuk menghitung harga jual
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Rata-rata Harga Jual</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {products.length > 0
-                ? `Rp ${Math.round(
-                    products.reduce((acc, product) => acc + product.sellingPrice, 0) / products.length,
-                  ).toLocaleString("id-ID")}`
-                : "Rp 0"}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Margin Rata-rata</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {products.length > 0
-                ? `${Math.round(products.reduce((acc, product) => acc + product.profitMargin, 0) / products.length)}%`
-                : "0%"}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nama Produk</Label>
+                <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
+              </div>
 
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold">Produk Terbaru</h2>
-        {products.length === 0 ? (
-          <div className="bg-muted/50 rounded-lg p-8 text-center">
-            <h3 className="text-lg font-medium mb-2">Belum ada produk</h3>
-            <p className="text-muted-foreground mb-4">Mulai tambahkan produk dengan menghitung harga jual</p>
-            <Button asChild>
-              <Link href="/dashboard/calculator">Tambah Produk Baru</Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.slice(0, 6).map((product) => (
-              <Link href={`/dashboard/products/${product.id}`} key={product.id}>
-                <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{product.name}</CardTitle>
-                    <CardDescription>{product.productCode || `ID: ${product.id.substring(0, 8)}`}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Harga Jual:</span>
-                        <span className="font-medium">Rp {product.sellingPrice.toLocaleString("id-ID")}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Margin:</span>
-                        <span className="font-medium">{product.profitMargin}%</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="materialCost">Biaya Bahan Baku (Rp)</Label>
+                  <Input
+                    id="materialCost"
+                    name="material_cost"
+                    type="number"
+                    min="0"
+                    value={formData.material_cost || ""}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-        {products.length > 6 && (
-          <div className="text-center mt-4">
-            <Button asChild variant="outline">
-              <Link href="/dashboard/products">Lihat Semua Produk</Link>
-            </Button>
-          </div>
-        )}
+                <div className="space-y-2">
+                  <Label htmlFor="laborCost">Biaya Tenaga Kerja (Rp)</Label>
+                  <Input
+                    id="laborCost"
+                    name="labor_cost"
+                    type="number"
+                    min="0"
+                    value={formData.labor_cost || ""}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="overheadCost">Biaya Overhead (Rp)</Label>
+                  <Input
+                    id="overheadCost"
+                    name="overhead_cost"
+                    type="number"
+                    min="0"
+                    value={formData.overhead_cost || ""}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="otherCost">Biaya Lain-lain (Rp)</Label>
+                  <Input
+                    id="otherCost"
+                    name="other_cost"
+                    type="number"
+                    min="0"
+                    value={formData.other_cost || ""}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="profitMargin">Margin Keuntungan (%)</Label>
+                <Input
+                  id="profitMargin"
+                  name="profit_margin"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.profit_margin || ""}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total Biaya Produksi:</span>
+                  <span>
+                    Rp{" "}
+                    {(
+                      formData.material_cost +
+                      formData.labor_cost +
+                      formData.overhead_cost +
+                      formData.other_cost
+                    ).toLocaleString("id-ID")}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Margin Keuntungan:</span>
+                  <span>{formData.profit_margin}%</span>
+                </div>
+                <div className="flex justify-between items-center text-lg font-bold pt-2 border-t">
+                  <span>Harga Jual:</span>
+                  <span>Rp {sellingPrice.toLocaleString("id-ID")}</span>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
+              <Button variant="outline" type="button" onClick={() => router.back()} className="w-full sm:w-auto">
+                Batal
+              </Button>
+              <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+                {isLoading ? "Menyimpan..." : "Simpan Produk"}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
       </div>
     </DashboardLayout>
   )
