@@ -31,17 +31,23 @@ export default function RegisterPage() {
       return
     }
 
+    if (password.length < 6) {
+      setError("Password minimal 6 karakter")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const result = await registerUser(email, password, username)
       if (result.success) {
-        setError("Registrasi berhasil! Silakan cek email untuk verifikasi.")
-        setTimeout(() => {
-          router.push("/login")
-        }, 2000)
+        setError("")
+        alert("Registrasi berhasil! Silakan login dengan akun Anda.")
+        router.push("/login")
       } else {
         setError(result.error || "Terjadi kesalahan saat mendaftar")
       }
     } catch (err) {
+      console.error("Registration error:", err)
       setError("Terjadi kesalahan saat mendaftar")
     } finally {
       setIsLoading(false)
@@ -49,7 +55,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="container flex h-screen items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Daftar</CardTitle>
@@ -57,7 +63,17 @@ export default function RegisterPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">{error}</div>}
+            {error && (
+              <div
+                className={`text-sm p-3 rounded-md ${
+                  error.includes("berhasil")
+                    ? "bg-green-100 text-green-700 border border-green-200"
+                    : "bg-destructive/15 text-destructive"
+                }`}
+              >
+                {error}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
